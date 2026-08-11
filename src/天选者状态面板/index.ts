@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import { waitUntil } from 'async-wait-until';
 import App from './App.vue';
 import './global.css';
