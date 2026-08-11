@@ -1,4 +1,4 @@
-import _ from 'https://testingcf.jsdelivr.net/npm/lodash@4.17.21/+esm';
+import _ from 'lodash';
 import { waitUntil } from 'async-wait-until';
 import App from './App.vue';
 import './global.css';
