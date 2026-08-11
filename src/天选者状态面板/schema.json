@@ -25,7 +25,8 @@
     },
     "tags": {
       "default": [
-        "异界转生者"
+        "异界转生者",
+        "幸运MAX"
       ],
       "type": "array",
       "items": {
@@ -101,8 +102,8 @@
         {
           "name": "幸运 (LUK)",
           "key": "luk",
-          "value": 5,
-          "max": 100,
+          "value": 999,
+          "max": 999,
           "color": "#ffd54f",
           "icon": "🍀",
           "special": true

@@ -77,7 +77,7 @@ export const Schema = z
     className: z.string().default('天选者'),
     expCurrent: z.coerce.number().default(0),
     expMax: z.coerce.number().default(100),
-    tags: z.array(z.string()).default(['异界转生者']),
+    tags: z.array(z.string()).default(['异界转生者', '幸运MAX']),
 
     partnerLevel: z.coerce.number().default(0),
     bondLevel: z.coerce.number().default(0),
@@ -93,7 +93,7 @@ export const Schema = z
       { name: '智力 (INT)', key: 'int', value: 5, max: 100, color: '#667eea', icon: '🧠' },
       { name: '体质 (VIT)', key: 'vit', value: 5, max: 100, color: '#95e1d3', icon: '❤️' },
       { name: '精神 (MND)', key: 'mnd', value: 5, max: 100, color: '#f38181', icon: '🔮' },
-      { name: '幸运 (LUK)', key: 'luk', value: 5, max: 100, color: '#ffd54f', icon: '🍀', special: true },
+      { name: '幸运 (LUK)', key: 'luk', value: 999, max: 999, color: '#ffd54f', icon: '🍀', special: true },
     ]),
 
     mythicItems: z.array(MythicItemSchema).default([]),
