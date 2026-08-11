@@ -31,10 +31,15 @@ function injectSidebarLayout() {
   parent_doc.getElementById(SIDEBAR_STYLE_ID)?.remove();
   const style = parent_doc.createElement('style');
   style.id = SIDEBAR_STYLE_ID;
-  // 420 面板 + 8 左边距 + 12 间隔
+  // 420 面板 + 8 左边距 + 12 间隔 = 448px
+  // 同时解除 #chat 自身的 max-width 限制,让它撑满剩余空间
   style.textContent = `
     @media (min-width: 900px) {
-      #chat { margin-left: 448px !important; }
+      #chat {
+        margin-left: 448px !important;
+        max-width: calc(100vw - 460px) !important;
+        width: calc(100vw - 460px) !important;
+      }
     }
   `;
   parent_doc.head.appendChild(style);
