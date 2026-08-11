@@ -256,9 +256,11 @@ function applyLayout(layout: Layout) {
       if (btn) btn.textContent = '▾';
     }
 
-    // 关键: 用注入的 <style> 规则覆盖 iframe 样式,而非 inline style
-    // 这样即使酒馆助手修改 iframe.style 属性,也无法覆盖这里的规则
+    // 关键: 用注入的 <style> 规则定义 iframe 样式
+    // 并清空 iframe 的 inline style,让 <style> 规则生效
+    // (inline !important 会覆盖 stylesheet !important,所以必须清空 inline)
     injectIframeStyle(layout);
+    iframe.removeAttribute('style');
   } finally {
     _applying = false;
   }
@@ -287,10 +289,21 @@ $(async () => {
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
   if (iframe) {
-    // 酒馆助手可能调整 iframe style,监听并重新应用布局
-    const observer = new MutationObserver(() => applyLayout(getDefaultLayout()));
-    observer.observe(iframe, { attributes: true, attributeFilter: ['style', 'class'] });
-    setInterval(() => applyLayout(getDefaultLayout()), 1000);
+    // 酒馆助手会持续修改 iframe 的 style 属性(inline !important 会覆盖 stylesheet !important)
+    // 监听到 style 变化时,如果 iframe 上仍有 style 属性(被酒馆助手加回来的),就清空它
+    // 让注入的 <style> 规则生效
+    const observer = new MutationObserver(() => {
+      if (iframe.hasAttribute('style')) {
+        iframe.removeAttribute('style');
+      }
+    });
+    observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
+    // 兜底定时器:每秒确保 style 被清空
+    setInterval(() => {
+      if (iframe.hasAttribute('style')) {
+        iframe.removeAttribute('style');
+      }
+    }, 200);
     window.parent.addEventListener('resize', () => applyLayout(getDefaultLayout()));
     $(window).on('pagehide', () => {
       observer.disconnect();
