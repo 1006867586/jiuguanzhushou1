@@ -7,7 +7,9 @@ const PANEL_MARGIN = 8;
 
 // 把 iframe 从消息流中剥离,移到酒馆 body 下,固定到左侧背景区
 // 这样面板浮在左侧原本显示背景图的空白区,不再挤压对话
+let _applying_style = false;
 function detachAndPinIframe() {
+  if (_applying_style) return; // 防止 MutationObserver 回调递归
   const iframe = window.frameElement as HTMLIFrameElement | null;
   if (!iframe) {
     console.warn('[天选者状态面板] 无法获取 iframe 元素');
@@ -29,17 +31,22 @@ function detachAndPinIframe() {
   }
 
   // fixed 定位到左侧背景区
-  const s = iframe.style;
-  s.setProperty('position', 'fixed', 'important');
-  s.setProperty('left', `${PANEL_MARGIN}px`, 'important');
-  s.setProperty('top', `${PANEL_MARGIN}px`, 'important');
-  s.setProperty('height', `calc(100vh - ${PANEL_MARGIN * 2}px)`, 'important');
-  s.setProperty('width', `${PANEL_WIDTH}px`, 'important');
-  s.setProperty('z-index', '9999', 'important');
-  s.setProperty('border', '1px solid rgba(45, 53, 97, 0.6)', 'important');
-  s.setProperty('border-radius', '12px', 'important');
-  s.setProperty('box-shadow', '0 8px 32px rgba(0, 0, 0, 0.5)', 'important');
-  s.setProperty('background', 'transparent', 'important');
+  _applying_style = true;
+  try {
+    const s = iframe.style;
+    s.setProperty('position', 'fixed', 'important');
+    s.setProperty('left', `${PANEL_MARGIN}px`, 'important');
+    s.setProperty('top', `${PANEL_MARGIN}px`, 'important');
+    s.setProperty('height', `calc(100vh - ${PANEL_MARGIN * 2}px)`, 'important');
+    s.setProperty('width', `${PANEL_WIDTH}px`, 'important');
+    s.setProperty('z-index', '9999', 'important');
+    s.setProperty('border', '1px solid rgba(45, 53, 97, 0.6)', 'important');
+    s.setProperty('border-radius', '12px', 'important');
+    s.setProperty('box-shadow', '0 8px 32px rgba(0, 0, 0, 0.5)', 'important');
+    s.setProperty('background', 'transparent', 'important');
+  } finally {
+    _applying_style = false;
+  }
 }
 
 function cleanup() {
@@ -51,6 +58,8 @@ function cleanup() {
 }
 
 $(async () => {
+  // 1. 先把 iframe 移到 body 并 fixed 定位(在 Vue mount 之前完成)
+  //    这样 Vue 创建的 DOM 不会被移动,避免 removeChild/parentNode null 错误
   detachAndPinIframe();
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
@@ -66,8 +75,8 @@ $(async () => {
     });
   }
 
-  // store 内部用 getVariables 容错读取,schema 填充默认值
-  // 即使 MVU 未初始化当前楼层,面板也能用默认数据(1级、幸运999)显示
+  // 2. 最后 mount Vue(此时 iframe 已在 body 下,Vue 创建的 DOM 不会被移动)
+  //    store.ts 用 'latest' 而非 getCurrentMessageId(),不依赖 iframe 在消息流中
   try {
     createApp(App).use(createPinia()).mount('#app');
     console.info('[天选者状态面板] 已挂载到左侧背景区, iframe 尺寸:', iframe?.offsetWidth, 'x', iframe?.offsetHeight);
