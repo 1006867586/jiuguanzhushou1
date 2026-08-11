@@ -246,28 +246,6 @@ function applyLayout(layout: Layout) {
   }
 }
 
-// 关键改动: 把 iframe 从消息流剥离到 body,但在 Vue mount 之前完成
-// 这样不会出现 Vue 持有的 DOM 引用失效问题
-function detachIframe() {
-  const iframe = window.frameElement as HTMLIFrameElement | null;
-  if (!iframe) return false;
-
-  const parent_doc = window.parent.document;
-  if (iframe.parentElement === parent_doc.body) return true;
-
-  // 记录原父元素,稍后压扁它
-  const $old_parent = $(iframe).parent();
-  if ($old_parent.length && !$old_parent.hasClass('mes_text') && !$old_parent.is('body')) {
-    $old_parent.css({ height: '0', overflow: 'hidden', margin: '0', padding: '0', border: 'none' });
-  }
-
-  // 移动到 body
-  parent_doc.body.appendChild(iframe);
-  iframe.id = IFRAME_ID;
-  console.info('[天选者状态面板] 已将 iframe 移至酒馆 body 下');
-  return true;
-}
-
 function cleanup() {
   const parent_doc = window.parent.document;
   parent_doc.getElementById(CONTROL_ID)?.remove();
@@ -275,21 +253,22 @@ function cleanup() {
 }
 
 $(async () => {
-  // 1. 先把 iframe 移到 body(在 Vue mount 之前,不会触发 removeChild 错误)
-  detachIframe();
-  // 2. 注入控制条和样式
+  // 不 detach iframe,留在消息流中(避免酒馆助手把它当作全局脚本 iframe 导致 getMessageId 报错)
+  // 只用 position:fixed 视觉定位到左侧,配合 MutationObserver 持续清空 inline style
   ensureControls(getDefaultLayout());
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
   if (iframe) {
     // 持续清空 iframe 的 inline style,防止酒馆助手覆盖
+    // (inline !important 会覆盖 stylesheet !important,必须清空 inline 让注入的 <style> 生效)
     const observer = new MutationObserver(() => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
       }
     });
     observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
-    setInterval(() => {
+    // 兜底定时器
+    const interval_id = setInterval(() => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
       }
@@ -297,11 +276,11 @@ $(async () => {
     window.parent.addEventListener('resize', () => applyLayout(getDefaultLayout()));
     $(window).on('pagehide', () => {
       observer.disconnect();
+      clearInterval(interval_id);
       cleanup();
     });
   }
 
-  // 3. 最后 mount Vue(此时 iframe 已在 body 下,Vue 创建的 DOM 不会被移动)
   try {
     createApp(App).use(createPinia()).mount('#app');
     console.info('[天选者状态面板] 已挂载,支持拖动/缩放/折叠');
