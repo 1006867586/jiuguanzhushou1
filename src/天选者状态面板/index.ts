@@ -51,8 +51,45 @@ function getDefaultLayout(): Layout {
   };
 }
 
-// 在父页面注入标题栏(拖动手柄+折叠按钮)+ resize handle
 const CONTROL_ID = 'tavern-status-panel-controls';
+const IFRAME_ID = 'tavern-status-panel-iframe';
+const IFRAME_STYLE_ID = 'tavern-status-panel-iframe-style';
+
+// 在父页面注入 <style> 规则,用 ID 选择器 + !important 锁定 iframe 样式
+function injectIframeStyle(layout: Layout) {
+  const parent_doc = window.parent.document;
+  let style_el = parent_doc.getElementById(IFRAME_STYLE_ID) as HTMLStyleElement | null;
+  if (!style_el) {
+    style_el = parent_doc.createElement('style');
+    style_el.id = IFRAME_STYLE_ID;
+    parent_doc.head.appendChild(style_el);
+  }
+
+  if (layout.collapsed) {
+    style_el.textContent = `
+      #${IFRAME_ID} { display: none !important; }
+    `;
+  } else {
+    style_el.textContent = `
+      #${IFRAME_ID} {
+        position: fixed !important;
+        left: ${layout.left}px !important;
+        top: ${layout.top + TITLE_BAR_HEIGHT}px !important;
+        width: ${layout.width}px !important;
+        height: ${layout.height}px !important;
+        z-index: 9999 !important;
+        border: 1px solid rgba(45, 53, 97, 0.6) !important;
+        border-radius: 0 0 8px 8px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+        background: transparent !important;
+        display: block !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+    `;
+  }
+}
+
 function ensureControls(layout: Layout) {
   const parent_doc = window.parent.document;
   let wrap = parent_doc.getElementById(CONTROL_ID) as HTMLDivElement | null;
@@ -69,7 +106,6 @@ function ensureControls(layout: Layout) {
     `;
     parent_doc.body.appendChild(wrap);
 
-    // 标题栏(拖动手柄 + 折叠按钮)
     const bar = parent_doc.createElement('div');
     bar.style.cssText = `
       pointer-events: auto;
@@ -92,7 +128,6 @@ function ensureControls(layout: Layout) {
     bar.innerHTML = `<span>🎲 天选者状态</span><button id="tavern-panel-collapse" style="background:none;border:none;color:#a8b9ff;cursor:pointer;font-size:14px;padding:0 4px;line-height:1;">▾</button>`;
     wrap.appendChild(bar);
 
-    // 折叠按钮
     const btn = bar.querySelector('#tavern-panel-collapse') as HTMLButtonElement;
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -102,12 +137,9 @@ function ensureControls(layout: Layout) {
       applyLayout(current);
     });
 
-    // 拖动逻辑
+    // 拖动
     let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startLeft = 0;
-    let startTop = 0;
+    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
     bar.addEventListener('mousedown', e => {
       if ((e.target as HTMLElement).tagName === 'BUTTON') return;
       dragging = true;
@@ -126,11 +158,9 @@ function ensureControls(layout: Layout) {
       saveLayout(cur);
       applyLayout(cur);
     });
-    parent_doc.addEventListener('mouseup', () => {
-      dragging = false;
-    });
+    parent_doc.addEventListener('mouseup', () => { dragging = false; });
 
-    // resize handle(右下角)
+    // resize handle
     const resize = parent_doc.createElement('div');
     resize.dataset.role = 'resize';
     resize.style.cssText = `
@@ -147,10 +177,7 @@ function ensureControls(layout: Layout) {
     wrap.appendChild(resize);
 
     let resizing = false;
-    let rStartX = 0;
-    let rStartY = 0;
-    let rStartW = 0;
-    let rStartH = 0;
+    let rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0;
     resize.addEventListener('mousedown', e => {
       resizing = true;
       rStartX = e.clientX;
@@ -170,59 +197,15 @@ function ensureControls(layout: Layout) {
       saveLayout(cur);
       applyLayout(cur);
     });
-    parent_doc.addEventListener('mouseup', () => {
-      resizing = false;
-    });
+    parent_doc.addEventListener('mouseup', () => { resizing = false; });
 
-    console.info('[天选者状态面板] 已注入控制条(拖动标题栏移动/右下角缩放/点击▾折叠)');
+    console.info('[天选者状态面板] 已注入控制条');
   }
 
   applyLayout(layout);
 }
 
-// 防止 MutationObserver 与 applyLayout 递归
 let _applying = false;
-
-const IFRAME_ID = 'tavern-status-panel-iframe';
-const IFRAME_STYLE_ID = 'tavern-status-panel-iframe-style';
-
-// 在父页面注入一个 <style> 标签,用属性选择器锁定 iframe
-// CSS 规则(选择器 + !important)的优先级高于 inline style 的 !important
-// (同为 important 时,选择器特异性高的胜出),酒馆助手改 iframe style 属性也无法覆盖
-function injectIframeStyle(layout: Layout) {
-  const parent_doc = window.parent.document;
-  let style_el = parent_doc.getElementById(IFRAME_STYLE_ID) as HTMLStyleElement | null;
-  if (!style_el) {
-    style_el = parent_doc.createElement('style');
-    style_el.id = IFRAME_STYLE_ID;
-    parent_doc.head.appendChild(style_el);
-  }
-
-  if (layout.collapsed) {
-    style_el.textContent = `
-      #${IFRAME_ID} {
-        display: none !important;
-      }
-    `;
-  } else {
-    style_el.textContent = `
-      #${IFRAME_ID} {
-        position: fixed !important;
-        left: ${layout.left}px !important;
-        top: ${layout.top + TITLE_BAR_HEIGHT}px !important;
-        width: ${layout.width}px !important;
-        height: ${layout.height}px !important;
-        z-index: 9999 !important;
-        border: 1px solid rgba(45, 53, 97, 0.6) !important;
-        border-radius: 0 0 8px 8px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-        background: transparent !important;
-        display: block !important;
-      }
-    `;
-  }
-}
-
 function applyLayout(layout: Layout) {
   if (_applying) return;
   const iframe = window.frameElement as HTMLIFrameElement | null;
@@ -234,7 +217,6 @@ function applyLayout(layout: Layout) {
     const wrap = parent_doc.getElementById(CONTROL_ID) as HTMLDivElement | null;
     if (!wrap) return;
 
-    // 给 iframe 打上 id,让注入的 <style> 能锁定它
     if (iframe.id !== IFRAME_ID) iframe.id = IFRAME_ID;
 
     const btn = wrap.querySelector('#tavern-panel-collapse') as HTMLButtonElement | null;
@@ -256,25 +238,34 @@ function applyLayout(layout: Layout) {
       if (btn) btn.textContent = '▾';
     }
 
-    // 关键: 用注入的 <style> 规则定义 iframe 样式
-    // 并清空 iframe 的 inline style,让 <style> 规则生效
-    // (inline !important 会覆盖 stylesheet !important,所以必须清空 inline)
     injectIframeStyle(layout);
+    // 清空 inline style,让 <style> 规则生效
     iframe.removeAttribute('style');
   } finally {
     _applying = false;
   }
 }
 
-// 把 iframe 原来的占位父元素(消息流中的 code/pre/div)压扁,减少消息流空白
-// 不移动 iframe 本身,避免浏览器重载 iframe 内容导致 Vue 崩溃
-function collapsePlaceholder() {
+// 关键改动: 把 iframe 从消息流剥离到 body,但在 Vue mount 之前完成
+// 这样不会出现 Vue 持有的 DOM 引用失效问题
+function detachIframe() {
   const iframe = window.frameElement as HTMLIFrameElement | null;
-  if (!iframe) return;
-  const $parent = $(iframe).parent();
-  if ($parent.length && !$parent.hasClass('mes_text') && !$parent.is('body')) {
-    $parent.css({ height: '0', overflow: 'hidden', margin: '0', padding: '0', border: 'none' });
+  if (!iframe) return false;
+
+  const parent_doc = window.parent.document;
+  if (iframe.parentElement === parent_doc.body) return true;
+
+  // 记录原父元素,稍后压扁它
+  const $old_parent = $(iframe).parent();
+  if ($old_parent.length && !$old_parent.hasClass('mes_text') && !$old_parent.is('body')) {
+    $old_parent.css({ height: '0', overflow: 'hidden', margin: '0', padding: '0', border: 'none' });
   }
+
+  // 移动到 body
+  parent_doc.body.appendChild(iframe);
+  iframe.id = IFRAME_ID;
+  console.info('[天选者状态面板] 已将 iframe 移至酒馆 body 下');
+  return true;
 }
 
 function cleanup() {
@@ -284,21 +275,20 @@ function cleanup() {
 }
 
 $(async () => {
-  collapsePlaceholder();
+  // 1. 先把 iframe 移到 body(在 Vue mount 之前,不会触发 removeChild 错误)
+  detachIframe();
+  // 2. 注入控制条和样式
   ensureControls(getDefaultLayout());
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
   if (iframe) {
-    // 酒馆助手会持续修改 iframe 的 style 属性(inline !important 会覆盖 stylesheet !important)
-    // 监听到 style 变化时,如果 iframe 上仍有 style 属性(被酒馆助手加回来的),就清空它
-    // 让注入的 <style> 规则生效
+    // 持续清空 iframe 的 inline style,防止酒馆助手覆盖
     const observer = new MutationObserver(() => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
       }
     });
     observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
-    // 兜底定时器:每秒确保 style 被清空
     setInterval(() => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
@@ -311,6 +301,7 @@ $(async () => {
     });
   }
 
+  // 3. 最后 mount Vue(此时 iframe 已在 body 下,Vue 创建的 DOM 不会被移动)
   try {
     createApp(App).use(createPinia()).mount('#app');
     console.info('[天选者状态面板] 已挂载,支持拖动/缩放/折叠');
