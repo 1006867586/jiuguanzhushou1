@@ -13,26 +13,19 @@ function pinIframeToLeft() {
 
   const $iframe = $(iframe);
   // 固定到左侧,420px 宽,高度撑满可视区域
+  // 注意: 不能设置 height,否则 bottom 会被忽略导致高度塌陷
   $iframe.css({
     position: 'fixed',
     left: '8px',
     top: '8px',
     bottom: '8px',
     width: '420px',
-    height: 'auto',
     'z-index': 9999,
     border: '1px solid rgba(45, 53, 97, 0.6)',
     'border-radius': '12px',
     'box-shadow': '0 8px 32px rgba(0, 0, 0, 0.5)',
     background: 'transparent',
   });
-
-  // 隐藏 iframe 在消息楼层中的占位父容器(避免消息流里留空白)
-  const $wrapper = $iframe.parent('.mes_text');
-  if ($wrapper.length) {
-    // 仅隐藏 iframe 的直接包裹层中的占位,保留其他内容
-    $wrapper.children('code').hide();
-  }
 
   console.info('[天选者状态面板] 已固定到屏幕左侧');
 }
