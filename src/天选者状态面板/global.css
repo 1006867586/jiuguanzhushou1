@@ -57,6 +57,13 @@ body {
   background: var(--grad-bg);
   min-height: 100vh;
   color: var(--c-text);
-  padding: 20px;
-  line-height: 1.6;
+  padding: 10px;
+  line-height: 1.4;
+  font-size: 12px;
+}
+
+/* 缩小所有卡片的圆角和内边距 */
+:root {
+  --card-radius: 10px;
+  --card-padding: 10px;
 }
