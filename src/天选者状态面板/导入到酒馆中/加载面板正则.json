@@ -2,7 +2,7 @@
   "id": "a1b2c3d4-load-status-panel",
   "scriptName": "加载天选者状态面板",
   "findRegex": "<StatusPanel/>|<状态面板/>|<状态占位符实现/>",
-  "replaceString": "```\n<body>\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/1006867586/jiuguanzhushou1@f17e96e3b0775e615380a37a8a93af8ecce747bb/dist/%E5%A4%A9%E9%80%89%E8%80%85%E7%8A%B6%E6%80%81%E9%9D%A2%E6%9D%BF/index.html')\n</script>\n</body>\n```",
+  "replaceString": "```\n<body>\n<script>\n$('body').load('https://testingcf.jsdelivr.net/gh/1006867586/jiuguanzhushou1@38774214b60125159d1b9924668e6d093ddfa2b6/dist/%E5%A4%A9%E9%80%89%E8%80%85%E7%8A%B6%E6%80%81%E9%9D%A2%E6%9D%BF/index.html')\n</script>\n</body>\n```",
   "trimStrings": [],
   "placement": [1, 2],
   "disabled": false,
