@@ -183,6 +183,46 @@ function ensureControls(layout: Layout) {
 // 防止 MutationObserver 与 applyLayout 递归
 let _applying = false;
 
+const IFRAME_ID = 'tavern-status-panel-iframe';
+const IFRAME_STYLE_ID = 'tavern-status-panel-iframe-style';
+
+// 在父页面注入一个 <style> 标签,用属性选择器锁定 iframe
+// CSS 规则(选择器 + !important)的优先级高于 inline style 的 !important
+// (同为 important 时,选择器特异性高的胜出),酒馆助手改 iframe style 属性也无法覆盖
+function injectIframeStyle(layout: Layout) {
+  const parent_doc = window.parent.document;
+  let style_el = parent_doc.getElementById(IFRAME_STYLE_ID) as HTMLStyleElement | null;
+  if (!style_el) {
+    style_el = parent_doc.createElement('style');
+    style_el.id = IFRAME_STYLE_ID;
+    parent_doc.head.appendChild(style_el);
+  }
+
+  if (layout.collapsed) {
+    style_el.textContent = `
+      #${IFRAME_ID} {
+        display: none !important;
+      }
+    `;
+  } else {
+    style_el.textContent = `
+      #${IFRAME_ID} {
+        position: fixed !important;
+        left: ${layout.left}px !important;
+        top: ${layout.top + TITLE_BAR_HEIGHT}px !important;
+        width: ${layout.width}px !important;
+        height: ${layout.height}px !important;
+        z-index: 9999 !important;
+        border: 1px solid rgba(45, 53, 97, 0.6) !important;
+        border-radius: 0 0 8px 8px !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+        background: transparent !important;
+        display: block !important;
+      }
+    `;
+  }
+}
+
 function applyLayout(layout: Layout) {
   if (_applying) return;
   const iframe = window.frameElement as HTMLIFrameElement | null;
@@ -194,41 +234,31 @@ function applyLayout(layout: Layout) {
     const wrap = parent_doc.getElementById(CONTROL_ID) as HTMLDivElement | null;
     if (!wrap) return;
 
+    // 给 iframe 打上 id,让注入的 <style> 能锁定它
+    if (iframe.id !== IFRAME_ID) iframe.id = IFRAME_ID;
+
     const btn = wrap.querySelector('#tavern-panel-collapse') as HTMLButtonElement | null;
     const resize = wrap.querySelector('[data-role="resize"]') as HTMLDivElement | null;
 
     if (layout.collapsed) {
-      // 折叠: 只显示标题栏
       wrap.style.left = `${layout.left}px`;
       wrap.style.top = `${layout.top}px`;
       wrap.style.width = `${layout.width}px`;
       wrap.style.height = `${TITLE_BAR_HEIGHT}px`;
-      iframe.style.setProperty('display', 'none', 'important');
       if (resize) resize.style.display = 'none';
       if (btn) btn.textContent = '▸';
     } else {
-      // 展开: 标题栏 + iframe
       wrap.style.left = `${layout.left}px`;
       wrap.style.top = `${layout.top}px`;
       wrap.style.width = `${layout.width}px`;
       wrap.style.height = `${layout.height + TITLE_BAR_HEIGHT}px`;
-
-      iframe.style.removeProperty('display');
-      const s = iframe.style;
-      s.setProperty('position', 'fixed', 'important');
-      s.setProperty('left', `${layout.left}px`, 'important');
-      s.setProperty('top', `${layout.top + TITLE_BAR_HEIGHT}px`, 'important');
-      s.setProperty('width', `${layout.width}px`, 'important');
-      s.setProperty('height', `${layout.height}px`, 'important');
-      s.setProperty('z-index', '9999', 'important');
-      s.setProperty('border', '1px solid rgba(45, 53, 97, 0.6)', 'important');
-      s.setProperty('border-radius', '0 0 8px 8px', 'important');
-      s.setProperty('box-shadow', '0 8px 32px rgba(0, 0, 0, 0.5)', 'important');
-      s.setProperty('background', 'transparent', 'important');
-
       if (resize) resize.style.display = '';
       if (btn) btn.textContent = '▾';
     }
+
+    // 关键: 用注入的 <style> 规则覆盖 iframe 样式,而非 inline style
+    // 这样即使酒馆助手修改 iframe.style 属性,也无法覆盖这里的规则
+    injectIframeStyle(layout);
   } finally {
     _applying = false;
   }
@@ -246,7 +276,9 @@ function collapsePlaceholder() {
 }
 
 function cleanup() {
-  window.parent.document.getElementById(CONTROL_ID)?.remove();
+  const parent_doc = window.parent.document;
+  parent_doc.getElementById(CONTROL_ID)?.remove();
+  parent_doc.getElementById(IFRAME_STYLE_ID)?.remove();
 }
 
 $(async () => {
