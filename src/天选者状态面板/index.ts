@@ -246,15 +246,60 @@ function applyLayout(layout: Layout) {
   }
 }
 
+// 关键: 清除 iframe 祖先链上的 transform/filter/perspective/will-change
+// 这些属性会创建新的包含块(containing block),导致 position:fixed 相对祖先而非视口
+// 这是 iframe "留在对话区移不出去" 的根本原因
+function neutralizeAncestors() {
+  const iframe = window.frameElement as HTMLIFrameElement | null;
+  if (!iframe) return;
+  const parent_doc = window.parent.document;
+
+  // 注入一条 <style> 规则,用通配符 + !important 清除所有祖先的 transform 等
+  let style_el = parent_doc.getElementById('tavern-status-panel-neutralize') as HTMLStyleElement | null;
+  if (!style_el) {
+    style_el = parent_doc.createElement('style');
+    style_el.id = 'tavern-status-panel-neutralize';
+    parent_doc.head.appendChild(style_el);
+  }
+  // 注意: 不能用 * {} 因为会影响所有元素,只针对 iframe 的祖先
+  // 由于无法预知祖先链,改为用 JS 遍历设置 inline style
+  let node: Element | null = iframe.parentElement;
+  const ancestors: HTMLElement[] = [];
+  while (node && node !== parent_doc.body && node !== parent_doc.documentElement) {
+    ancestors.push(node as HTMLElement);
+    node = node.parentElement;
+  }
+  for (const el of ancestors) {
+    // 清除会创建包含块的属性
+    el.style.setProperty('transform', 'none', 'important');
+    el.style.setProperty('filter', 'none', 'important');
+    el.style.setProperty('perspective', 'none', 'important');
+    el.style.setProperty('will-change', 'auto', 'important');
+    el.style.setProperty('contain', 'none', 'important');
+    // 压扁非 .mes_text 的祖先,减少消息流空白(但不能压 .mes_text 否则整条消息消失)
+    if (!el.classList.contains('mes_text') && !el.classList.contains('mes_block') && !el.classList.contains('mes')) {
+      el.style.setProperty('height', '0', 'important');
+      el.style.setProperty('overflow', 'hidden', 'important');
+      el.style.setProperty('margin', '0', 'important');
+      el.style.setProperty('padding', '0', 'important');
+      el.style.setProperty('border', 'none', 'important');
+    }
+  }
+  console.info(`[天选者状态面板] 已中和 ${ancestors.length} 个祖先元素的 transform/filter`);
+}
+
 function cleanup() {
   const parent_doc = window.parent.document;
   parent_doc.getElementById(CONTROL_ID)?.remove();
   parent_doc.getElementById(IFRAME_STYLE_ID)?.remove();
+  parent_doc.getElementById('tavern-status-panel-neutralize')?.remove();
 }
 
 $(async () => {
   // 不 detach iframe,留在消息流中(避免酒馆助手把它当作全局脚本 iframe 导致 getMessageId 报错)
-  // 只用 position:fixed 视觉定位到左侧,配合 MutationObserver 持续清空 inline style
+  // 1. 先中和祖先链上的 transform/filter(否则 position:fixed 相对祖先而非视口)
+  neutralizeAncestors();
+  // 2. 注入控制条和样式
   ensureControls(getDefaultLayout());
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
@@ -265,18 +310,23 @@ $(async () => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
       }
+      // 祖先可能被酒馆助手重新设置 transform,定期中和
+      neutralizeAncestors();
     });
     observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
-    // 兜底定时器
-    const interval_id = setInterval(() => {
+    // 高频兜底:requestAnimationFrame 比 setInterval 200ms 更快
+    let raf_id = 0;
+    const loop = () => {
       if (iframe.hasAttribute('style')) {
         iframe.removeAttribute('style');
       }
-    }, 200);
+      raf_id = requestAnimationFrame(loop);
+    };
+    raf_id = requestAnimationFrame(loop);
     window.parent.addEventListener('resize', () => applyLayout(getDefaultLayout()));
     $(window).on('pagehide', () => {
       observer.disconnect();
-      clearInterval(interval_id);
+      cancelAnimationFrame(raf_id);
       cleanup();
     });
   }
