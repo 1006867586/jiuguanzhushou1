@@ -354,6 +354,68 @@
       "constant": false,
       "selective": true,
       "probability": 100
+    },
+    {
+      "key": [
+        "[initvar]"
+      ],
+      "keysecondary": [],
+      "content": "# yaml-language-server: $schema=../../schema.json\n# 变量初始化文件 —— MVU 框架在新建聊天时会读取此文件初始化 stat_data\n# 此条目默认禁用,首次使用时由 MVU 框架自动启用一次进行初始化\ncharName: '{{user}}'\nlevel: 87\nclassName: 天选者\nexpCurrent: 87450\nexpMax: 92000\ntags:\n  - 异界转生者\n  - 幸运MAX\n\npartnerLevel: 82\nbondLevel: 10\n\ngold: 128450\nachieve: 47\nbossKills: 23\nlocation: 🗺️ 黄昏之门 · 最终战场\n\nstats:\n  - name: 力量 (STR)\n    key: str\n    value: 68\n    max: 100\n    color: '#ff6b6b'\n    icon: 💪\n  - name: 敏捷 (AGI)\n    key: agi\n    value: 75\n    max: 100\n    color: '#4ecdc4'\n    icon: ⚡\n  - name: 智力 (INT)\n    key: int\n    value: 82\n    max: 100\n    color: '#667eea'\n    icon: 🧠\n  - name: 体质 (VIT)\n    key: vit\n    value: 71\n    max: 100\n    color: '#95e1d3'\n    icon: ❤️\n  - name: 精神 (MND)\n    key: mnd\n    value: 88\n    max: 100\n    color: '#f38181'\n    icon: 🔮\n  - name: 幸运 (LUK)\n    key: luk\n    value: 999\n    max: 999\n    color: '#ffd54f'\n    icon: 🍀\n    special: true\n\nmythicItems:\n  - name: 命运之骰\n    type: 饰品\n    rarity: mythic\n    desc: 可重掷任何随机结果，每日3次\n    icon: 🎲\n    active: true\n  - name: 虚空背包\n    type: 容器\n    rarity: mythic\n    desc: 无限容量，内部时间静止\n    icon: 🎒\n    active: true\n  - name: 时之沙漏\n    type: 饰品\n    rarity: mythic\n    desc: 局部时间回溯5秒，冷却1小时\n    icon: ⏳\n    active: true\n  - name: 永恒誓约之剑\n    type: 武器\n    rarity: mythic\n    desc: 伤害与羁绊深度挂钩\n    icon: ⚔️\n    active: true\n  - name: 万灵图鉴\n    type: 道具\n    rarity: mythic\n    desc: 收录任何怪物/技能，可复制使用\n    icon: 📖\n    active: true\n  - name: 世界树之种\n    type: 消耗品\n    rarity: mythic\n    desc: 存档当前世界状态，一次性\n    icon: 🌱\n    active: true\n  - name: 七弦圣琴\n    type: 武器\n    rarity: mythic\n    desc: 艾米莉亚专属，奏响可逆转因果\n    icon: 🎵\n    active: false\n    holder: 艾米莉亚\n\ncurrentEquip:\n  - slot: 主手\n    name: 永恒誓约之剑 +12\n    rarity: mythic\n    icon: ⚔️\n  - slot: 副手\n    name: 命运之骰\n    rarity: mythic\n    icon: 🎲\n  - slot: 头部\n    name: 天选者之冠\n    rarity: legendary\n    icon: 👑\n  - slot: 身体\n    name: 虚空行者斗篷 +8\n    rarity: epic\n    icon: 🧥\n  - slot: 饰品\n    name: 时之沙漏\n    rarity: mythic\n    icon: ⏳\n  - slot: 鞋子\n    name: 风行者软靴 +5\n    rarity: rare\n    icon: 👢\n\ninventory:\n  - name: 传说强化石\n    qty: 12\n    rarity: legendary\n    icon: 💎\n  - name: 史诗附魔卷轴\n    qty: 5\n    rarity: epic\n    icon: 📜\n  - name: 怪物图鉴残页\n    qty: 47\n    rarity: rare\n    icon: 📄\n  - name: 艾米莉亚的画像\n    qty: 1\n    rarity: mythic\n    icon: 🖼️\n  - name: 异世界奶茶配方\n    qty: 1\n    rarity: epic\n    icon: 🧋\n  - name: 母亲的眼镜盒\n    qty: 1\n    rarity: legendary\n    icon: 👓\n  - name: 设计草图集\n    qty: 1\n    rarity: common\n    icon: 📐\n  - name: 鲁特琴弦\n    qty: 3\n    rarity: common\n    icon: 🎸\n\nconsumables:\n  - name: 高级红色恢复药剂\n    qty: 25\n    effect: 恢复HP 500\n    icon: 🔴\n  - name: 高级蓝色魔力药剂\n    qty: 18\n    effect: 恢复MP 400\n    icon: 🔵\n  - name: 绿色解毒剂\n    qty: 10\n    effect: 解除中毒\n    icon: 🟢\n  - name: 黄色活力药剂\n    qty: 8\n    effect: 解除疲劳\n    icon: 🟡\n  - name: 复活羽毛\n    qty: 3\n    effect: 原地复活\n    icon: 🪶\n\nskills:\n  - name: 命运重掷\n    type: 主动\n    cd: 3次/日\n    desc: 重掷任何随机结果\n    unlocked: true\n    icon: 🎲\n  - name: 虚空收纳\n    type: 被动\n    cd: '-'\n    desc: 无限背包空间\n    unlocked: true\n    icon: 🎒\n  - name: 时间回溯\n    type: 主动\n    cd: 1小时\n    desc: 回溯5秒时间\n    unlocked: true\n    icon: ⏳\n  - name: 誓约斩击\n    type: 主动\n    cd: 15秒\n    desc: 基于羁绊造成伤害\n    unlocked: true\n    icon: ⚔️\n  - name: 万灵复制\n    type: 主动\n    cd: 30秒\n    desc: 复制敌人技能\n    unlocked: true\n    icon: 📖\n  - name: 世界存档\n    type: 主动\n    cd: 一次性\n    desc: 存档世界状态\n    unlocked: true\n    icon: 🌱\n  - name: 天选觉醒\n    type: 终极\n    cd: 剧情触发\n    desc: 改写世界规则\n    unlocked: false\n    icon: ✨\n\nactiveQuests:\n  - name: 【终章】七弦圣琴\n    grade: SSS\n    progress: 85\n    desc: 与艾米莉亚共同奏响七弦圣琴，阻止诸神黄昏\n    icon: 🎵\n  - name: 【主线】银弦家的复兴\n    grade: S\n    progress: 60\n    desc: 收集散落的家族典籍，恢复银弦家声誉\n    icon: 📚\n\ncompletedQuests:\n  - name: 时之迷宫探索\n    grade: A\n    icon: ⏳\n  - name: 王都地下游击战\n    grade: S\n    icon: ⚔️\n  - name: 知识深渊调查\n    grade: A\n    icon: 📖\n  - name: 世界树之森修行\n    grade: SS\n    icon: 🌳\n  - name: 莫里亚蒂讨伐\n    grade: S\n    icon: 👹\n",
+      "comment": "[initvar]变量初始化勿开",
+      "order": 10,
+      "position": 0,
+      "constant": false,
+      "selective": true,
+      "probability": 100
+    },
+    {
+      "key": [
+        "变量列表",
+        "stat_data",
+        "当前变量"
+      ],
+      "keysecondary": [
+        "status_current_variable"
+      ],
+      "content": "---\n<status_current_variable>\n{{format_message_variable::stat_data}}\n</status_current_variable>\n",
+      "comment": "变量列表",
+      "order": 10,
+      "position": 0,
+      "constant": true,
+      "selective": false,
+      "probability": 100
+    },
+    {
+      "key": [
+        "[mvu_update]变量更新规则",
+        "变量更新规则"
+      ],
+      "keysecondary": [
+        "mvu_update"
+      ],
+      "content": "---\n变量更新规则:\n  charName:\n    type: string\n    check:\n      - {{user}} 的名字，通常不更新\n  level:\n    type: number\n    range: 1~999\n    check:\n      - 通过击败怪物、完成任务、特殊训练获得经验值而升级\n      - 升级时全身散发淡金色光芒约3秒\n      - 升级获得5点属性点和1点技能点\n      - 仅在 expCurrent >= expMax 时触发升级\n  className:\n    type: string\n    check:\n      - {{user}} 当前职业，固定为'天选者'，通常不更新\n  expCurrent:\n    type: number\n    range: 0~expMax\n    check:\n      - 战斗、任务、训练后根据收益 delta 增减\n      - 达到 expMax 后归零并 level +1，expMax 同步提升\n  expMax:\n    type: number\n    check:\n      - 升级后按公式提升（如 new = old * 1.15）\n  tags:\n    type: string[]\n    check:\n      - {{user}} 身份标签，如'异界转生者'、'幸运MAX'\n      - 触发重要剧情节点时偶尔添加新标签\n  partnerLevel:\n    type: number\n    range: 1~999\n    check:\n      - 艾米莉亚的等级，与 {{user}} 同步成长但略低\n      - 经验获取后达到阈值时升级\n  bondLevel:\n    type: number\n    range: 0~100\n    check:\n      - 艾米莉亚与 {{user}} 的羁绊等级\n      - 共同战斗、相互救助、情感推进时 +1~3\n      - 严重背叛或误解时 -(1~5)，但本剧情倾向正向，慎用减分\n  gold:\n    type: number\n    range: >=0\n    check:\n      - 战斗掉落、任务奖励、出售物品时 +\n      - 购买装备、药剂、住宿、修理时 -\n      - 大额支出需在剧情中体现\n  achieve:\n    type: number\n    check:\n      - 达成特定里程碑时 +1（首次击杀 Boss、完成 SS 级任务等）\n  bossKills:\n    type: number\n    check:\n      - 每击杀一个 Boss（A 级以上）时 +1\n  location:\n    type: string\n    check:\n      - {{user}} 当前所在地点，格式'🗺️ 区域 · 具体位置'\n      - 移动、传送、剧情切换场景时 replace\n  stats:\n    type: |-\n      [{\n        name: string;\n        key: 'str'|'agi'|'int'|'vit'|'mnd'|'luk';\n        value: number;\n        max: number;\n        color: string;\n        icon: string;\n        special?: boolean;\n      }]\n    check:\n      - 升级时获得 5 点属性点，分配到对应属性\n      - 使用强化石、训练、特殊事件可临时或永久提升\n      - 幸运值固定 999，不更新（special: true 标记）\n      - 通过 key 匹配现有属性项进行 delta 更新\n  mythicItems:\n    type: |-\n      [{\n        name: string;\n        type: string;\n        rarity: 'mythic';\n        desc: string;\n        icon: string;\n        active: boolean;\n        holder?: string;\n      }]\n    check:\n      - 神话级装备列表，新增时通过 insert 追加\n      - active 字段表示是否激活使用\n      - holder 字段表示装备归属（如艾米莉亚专属装备）\n      - 神话装备不会损坏或丢失，慎用 remove\n  currentEquip:\n    type: |-\n      [{\n        slot: '主手'|'副手'|'头部'|'身体'|'饰品'|'鞋子';\n        name: string;\n        rarity: string;\n        icon: string;\n      }]\n    check:\n      - 当前装备栏，通过 slot 字段匹配\n      - 换装时 replace 对应 slot 的 name/rarity/icon\n      - 卸下装备时 name 替换为'空'\n  inventory:\n    type: |-\n      [{\n        name: string;\n        qty: number;\n        rarity: string;\n        icon: string;\n      }]\n    check:\n      - 虚空背包物品，获得时 insert，消耗时 delta qty\n      - qty 归零后该条目 remove\n      - 神话级物品即使 qty=1 也不删除\n  consumables:\n    type: |-\n      [{\n        name: string;\n        qty: number;\n        effect: string;\n        icon: string;\n      }]\n    check:\n      - 消耗品列表，使用时 delta qty，归零后 remove\n      - 购买或拾取时 delta qty 或 insert 新条目\n  skills:\n    type: |-\n      [{\n        name: string;\n        type: '主动'|'被动'|'终极';\n        cd: string;\n        desc: string;\n        unlocked: boolean;\n        icon: string;\n      }]\n    check:\n      - 技能树，通过 name 匹配\n      - 等级达标或剧情触发时 unlocked 置为 true\n      - 技能升级时 replace cd 或 desc\n      - '天选觉醒'为终极技能，仅在重大剧情节点解锁\n  activeQuests:\n    type: |-\n      [{\n        name: string;\n        grade: 'D'|'C'|'B'|'A'|'S'|'SS'|'SSS';\n        progress: number;\n        desc: string;\n        icon: string;\n      }]\n    check:\n      - 进行中任务，剧情推进时 delta progress\n      - progress 达到 100 时移到 completedQuests（remove + insert）\n      - 接到新任务时 insert\n      - grade 反映任务难度，不轻易变动\n  completedQuests:\n    type: |-\n      [{\n        name: string;\n        grade: string;\n        icon: string;\n      }]\n    check:\n      - 已完成任务，activeQuests 完成后 insert 到此处\n      - 只增不减\n",
+      "comment": "[mvu_update]变量更新规则",
+      "order": 11,
+      "position": 0,
+      "constant": true,
+      "selective": false,
+      "probability": 100
+    },
+    {
+      "key": [
+        "[mvu_update]变量输出格式",
+        "变量输出格式"
+      ],
+      "keysecondary": [
+        "UpdateVariable"
+      ],
+      "content": "---\n变量输出格式:\n  rule:\n    - you must output the update analysis and the actual update commands at once in the end of the next reply\n    - the update commands works like the **JSON Patch (RFC 6902)** standard, must be a valid JSON array containing operation objects, but supports the following operations instead:\n      - replace: replace the value of existing paths\n      - delta: update the value of existing number paths by a delta value\n      - insert: insert new items into an object or array (using `-` as array index intends appending to the end)\n      - remove\n      - move\n    - don't update field names starts with `_` as they are readonly, such as `_变量`\n    - the root variable name is `stat_data`, all paths should be relative to it (e.g. `/level`, `/stats/0/value`)\n    - for array items, identify them by index or by matching a unique field (like `key` for stats, `slot` for currentEquip, `name` for inventory/skills/quests)\n    - when removing a completed quest from activeQuests, also insert it into completedQuests in the same patch\n  format: |-\n    <UpdateVariable>\n    <Analysis>$(IN ENGLISH, no more than 80 words)\n    - ${calculate time passed: ...}\n    - ${decide whether dramatic updates are allowed as it's in a special case or the time passed is more than usual: yes/no}\n    - ${analyze every variable based on its corresponding `check`, according only to current reply instead of previous plots: ...}\n    </Analysis>\n    <JSONPatch>\n    [\n      { \"op\": \"replace\", \"path\": \"/level\", \"value\": 88 },\n      { \"op\": \"delta\", \"path\": \"/expCurrent\", \"value\": 1200 },\n      { \"op\": \"delta\", \"path\": \"/gold\", \"value\": -500 },\n      { \"op\": \"delta\", \"path\": \"/stats/0/value\", \"value\": 2 },\n      { \"op\": \"replace\", \"path\": \"/location\", \"value\": \"🗺️ 王都 · 冒险者公会\" },\n      { \"op\": \"insert\", \"path\": \"/inventory/-\", \"value\": { \"name\": \"新物品\", \"qty\": 1, \"rarity\": \"rare\", \"icon\": \"📦\" } },\n      { \"op\": \"remove\", \"path\": \"/consumables/2\" },\n      { \"op\": \"replace\", \"path\": \"/activeQuests/0/progress\", \"value\": 90 }\n    ]\n    </JSONPatch>\n    </UpdateVariable>\n",
+      "comment": "[mvu_update]变量输出格式",
+      "order": 12,
+      "position": 0,
+      "constant": true,
+      "selective": false,
+      "probability": 100
     }
   ]
 }
