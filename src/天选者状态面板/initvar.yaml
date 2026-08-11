@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=schema.json
+# 新手开局初始变量
+charName: '{{user}}'
+level: 1
+className: 天选者
+expCurrent: 0
+expMax: 100
+tags:
+  - 异界转生者
+
+partnerLevel: 0
+bondLevel: 0
+
+gold: 50
+achieve: 0
+bossKills: 0
+location: '🗺️ 异世界 · 召唤之地'
+
+stats:
+  - name: 力量 (STR)
+    key: str
+    value: 5
+    max: 100
+    color: '#ff6b6b'
+    icon: '💪'
+  - name: 敏捷 (AGI)
+    key: agi
+    value: 5
+    max: 100
+    color: '#4ecdc4'
+    icon: '⚡'
+  - name: 智力 (INT)
+    key: int
+    value: 5
+    max: 100
+    color: '#667eea'
+    icon: '🧠'
+  - name: 体质 (VIT)
+    key: vit
+    value: 5
+    max: 100
+    color: '#95e1d3'
+    icon: '❤️'
+  - name: 精神 (MND)
+    key: mnd
+    value: 5
+    max: 100
+    color: '#f38181'
+    icon: '🔮'
+  - name: 幸运 (LUK)
+    key: luk
+    value: 5
+    max: 100
+    color: '#ffd54f'
+    icon: '🍀'
+    special: true
+
+mythicItems: []
+
+currentEquip: []
+
+inventory:
+  - name: 干粮
+    qty: 3
+    rarity: common
+    icon: '🍞'
+  - name: 清水
+    qty: 2
+    rarity: common
+    icon: '💧'
+
+consumables:
+  - name: 初级红色恢复药剂
+    qty: 3
+    effect: 恢复HP 50
+    icon: '🔴'
+
+skills:
+  - name: 普通攻击
+    type: 主动
+    cd: '-'
+    desc: 基础物理攻击
+    unlocked: true
+    icon: '⚔️'
+
+activeQuests:
+  - name: '【主线】初次觉醒'
+    grade: D
+    progress: 0
+    desc: 在异世界中找到自己的第一个伙伴
+    icon: '🌟'
+
+completedQuests: []
