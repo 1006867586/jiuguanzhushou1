@@ -2,338 +2,75 @@ import _ from 'lodash';
 import App from './App.vue';
 import './global.css';
 
-const DEFAULT_WIDTH = 320;
-const DEFAULT_HEIGHT_RATIO = 0.96;
-const MIN_WIDTH = 260;
-const MIN_HEIGHT = 240;
-const MARGIN = 8;
-const TITLE_BAR_HEIGHT = 24;
+const PANEL_WIDTH = 420;
+const PANEL_MARGIN = 8;
 
-const STORAGE_KEY = 'tavern-status-panel-layout';
-
-interface Layout {
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  collapsed: boolean;
-}
-
-function loadLayout(): Layout | null {
-  try {
-    const raw = window.parent.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const data = JSON.parse(raw);
-    if (typeof data.left !== 'number' || typeof data.width !== 'number') return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
-function saveLayout(layout: Layout) {
-  try {
-    window.parent.localStorage.setItem(STORAGE_KEY, JSON.stringify(layout));
-  } catch {
-    /* 忽略存储失败 */
-  }
-}
-
-function getDefaultLayout(): Layout {
-  const saved = loadLayout();
-  if (saved) return saved;
-  return {
-    left: MARGIN,
-    top: MARGIN,
-    width: DEFAULT_WIDTH,
-    height: Math.round(window.parent.innerHeight * DEFAULT_HEIGHT_RATIO) - TITLE_BAR_HEIGHT - MARGIN,
-    collapsed: false,
-  };
-}
-
-const CONTROL_ID = 'tavern-status-panel-controls';
-const IFRAME_ID = 'tavern-status-panel-iframe';
-const IFRAME_STYLE_ID = 'tavern-status-panel-iframe-style';
-
-// 在父页面注入 <style> 规则,用 ID 选择器 + !important 锁定 iframe 样式
-function injectIframeStyle(layout: Layout) {
-  const parent_doc = window.parent.document;
-  let style_el = parent_doc.getElementById(IFRAME_STYLE_ID) as HTMLStyleElement | null;
-  if (!style_el) {
-    style_el = parent_doc.createElement('style');
-    style_el.id = IFRAME_STYLE_ID;
-    parent_doc.head.appendChild(style_el);
-  }
-
-  if (layout.collapsed) {
-    style_el.textContent = `
-      #${IFRAME_ID} { display: none !important; }
-    `;
-  } else {
-    style_el.textContent = `
-      #${IFRAME_ID} {
-        position: fixed !important;
-        left: ${layout.left}px !important;
-        top: ${layout.top + TITLE_BAR_HEIGHT}px !important;
-        width: ${layout.width}px !important;
-        height: ${layout.height}px !important;
-        z-index: 9999 !important;
-        border: 1px solid rgba(45, 53, 97, 0.6) !important;
-        border-radius: 0 0 8px 8px !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
-        background: transparent !important;
-        display: block !important;
-        margin: 0 !important;
-        padding: 0 !important;
-      }
-    `;
-  }
-}
-
-function ensureControls(layout: Layout) {
-  const parent_doc = window.parent.document;
-  let wrap = parent_doc.getElementById(CONTROL_ID) as HTMLDivElement | null;
-
-  if (!wrap) {
-    wrap = parent_doc.createElement('div');
-    wrap.id = CONTROL_ID;
-    wrap.style.cssText = `
-      position: fixed;
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      pointer-events: none;
-    `;
-    parent_doc.body.appendChild(wrap);
-
-    const bar = parent_doc.createElement('div');
-    bar.style.cssText = `
-      pointer-events: auto;
-      cursor: move;
-      user-select: none;
-      height: ${TITLE_BAR_HEIGHT}px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-      background: linear-gradient(135deg, rgba(45,53,97,0.95), rgba(31,38,71,0.95));
-      color: #a8b9ff;
-      font-size: 11px;
-      font-weight: 600;
-      border: 1px solid rgba(45,53,97,0.6);
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
-      backdrop-filter: blur(8px);
-    `;
-    bar.innerHTML = `<span>🎲 天选者状态</span><button id="tavern-panel-collapse" style="background:none;border:none;color:#a8b9ff;cursor:pointer;font-size:14px;padding:0 4px;line-height:1;">▾</button>`;
-    wrap.appendChild(bar);
-
-    const btn = bar.querySelector('#tavern-panel-collapse') as HTMLButtonElement;
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const current = getDefaultLayout();
-      current.collapsed = !current.collapsed;
-      saveLayout(current);
-      applyLayout(current);
-    });
-
-    // 拖动
-    let dragging = false;
-    let startX = 0, startY = 0, startLeft = 0, startTop = 0;
-    bar.addEventListener('mousedown', e => {
-      if ((e.target as HTMLElement).tagName === 'BUTTON') return;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      const cur = getDefaultLayout();
-      startLeft = cur.left;
-      startTop = cur.top;
-      e.preventDefault();
-    });
-    parent_doc.addEventListener('mousemove', e => {
-      if (!dragging) return;
-      const cur = getDefaultLayout();
-      cur.left = Math.max(0, Math.min(window.parent.innerWidth - 60, startLeft + (e.clientX - startX)));
-      cur.top = Math.max(0, Math.min(window.parent.innerHeight - 30, startTop + (e.clientY - startY)));
-      saveLayout(cur);
-      applyLayout(cur);
-    });
-    parent_doc.addEventListener('mouseup', () => { dragging = false; });
-
-    // resize handle
-    const resize = parent_doc.createElement('div');
-    resize.dataset.role = 'resize';
-    resize.style.cssText = `
-      pointer-events: auto;
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      width: 14px;
-      height: 14px;
-      cursor: nwse-resize;
-      background: linear-gradient(135deg, transparent 50%, rgba(168,185,255,0.6) 50%);
-      border-radius: 0 0 8px 0;
-    `;
-    wrap.appendChild(resize);
-
-    let resizing = false;
-    let rStartX = 0, rStartY = 0, rStartW = 0, rStartH = 0;
-    resize.addEventListener('mousedown', e => {
-      resizing = true;
-      rStartX = e.clientX;
-      rStartY = e.clientY;
-      const cur = getDefaultLayout();
-      rStartW = cur.width;
-      rStartH = cur.height;
-      e.preventDefault();
-      e.stopPropagation();
-    });
-    parent_doc.addEventListener('mousemove', e => {
-      if (!resizing) return;
-      const cur = getDefaultLayout();
-      cur.width = Math.max(MIN_WIDTH, rStartW + (e.clientX - rStartX));
-      cur.height = Math.max(MIN_HEIGHT, rStartH + (e.clientY - rStartY));
-      cur.collapsed = false;
-      saveLayout(cur);
-      applyLayout(cur);
-    });
-    parent_doc.addEventListener('mouseup', () => { resizing = false; });
-
-    console.info('[天选者状态面板] 已注入控制条');
-  }
-
-  applyLayout(layout);
-}
-
-let _applying = false;
-function applyLayout(layout: Layout) {
-  if (_applying) return;
+// 把 iframe 从消息流中剥离,移到酒馆 body 下,固定到左侧背景区
+// 这样面板浮在左侧原本显示背景图的空白区,不再挤压对话
+function detachAndPinIframe() {
   const iframe = window.frameElement as HTMLIFrameElement | null;
-  if (!iframe) return;
-
-  _applying = true;
-  try {
-    const parent_doc = window.parent.document;
-    const wrap = parent_doc.getElementById(CONTROL_ID) as HTMLDivElement | null;
-    if (!wrap) return;
-
-    if (iframe.id !== IFRAME_ID) iframe.id = IFRAME_ID;
-
-    const btn = wrap.querySelector('#tavern-panel-collapse') as HTMLButtonElement | null;
-    const resize = wrap.querySelector('[data-role="resize"]') as HTMLDivElement | null;
-
-    if (layout.collapsed) {
-      wrap.style.left = `${layout.left}px`;
-      wrap.style.top = `${layout.top}px`;
-      wrap.style.width = `${layout.width}px`;
-      wrap.style.height = `${TITLE_BAR_HEIGHT}px`;
-      if (resize) resize.style.display = 'none';
-      if (btn) btn.textContent = '▸';
-    } else {
-      wrap.style.left = `${layout.left}px`;
-      wrap.style.top = `${layout.top}px`;
-      wrap.style.width = `${layout.width}px`;
-      wrap.style.height = `${layout.height + TITLE_BAR_HEIGHT}px`;
-      if (resize) resize.style.display = '';
-      if (btn) btn.textContent = '▾';
-    }
-
-    injectIframeStyle(layout);
-    // 清空 inline style,让 <style> 规则生效
-    iframe.removeAttribute('style');
-  } finally {
-    _applying = false;
+  if (!iframe) {
+    console.warn('[天选者状态面板] 无法获取 iframe 元素');
+    return;
   }
-}
 
-// 关键: 清除 iframe 祖先链上的 transform/filter/perspective/will-change
-// 这些属性会创建新的包含块(containing block),导致 position:fixed 相对祖先而非视口
-// 这是 iframe "留在对话区移不出去" 的根本原因
-function neutralizeAncestors() {
-  const iframe = window.frameElement as HTMLIFrameElement | null;
-  if (!iframe) return;
   const parent_doc = window.parent.document;
 
-  // 注入一条 <style> 规则,用通配符 + !important 清除所有祖先的 transform 等
-  let style_el = parent_doc.getElementById('tavern-status-panel-neutralize') as HTMLStyleElement | null;
-  if (!style_el) {
-    style_el = parent_doc.createElement('style');
-    style_el.id = 'tavern-status-panel-neutralize';
-    parent_doc.head.appendChild(style_el);
-  }
-  // 注意: 不能用 * {} 因为会影响所有元素,只针对 iframe 的祖先
-  // 由于无法预知祖先链,改为用 JS 遍历设置 inline style
-  let node: Element | null = iframe.parentElement;
-  const ancestors: HTMLElement[] = [];
-  while (node && node !== parent_doc.body && node !== parent_doc.documentElement) {
-    ancestors.push(node as HTMLElement);
-    node = node.parentElement;
-  }
-  for (const el of ancestors) {
-    // 清除会创建包含块的属性
-    el.style.setProperty('transform', 'none', 'important');
-    el.style.setProperty('filter', 'none', 'important');
-    el.style.setProperty('perspective', 'none', 'important');
-    el.style.setProperty('will-change', 'auto', 'important');
-    el.style.setProperty('contain', 'none', 'important');
-    // 压扁非 .mes_text 的祖先,减少消息流空白(但不能压 .mes_text 否则整条消息消失)
-    if (!el.classList.contains('mes_text') && !el.classList.contains('mes_block') && !el.classList.contains('mes')) {
-      el.style.setProperty('height', '0', 'important');
-      el.style.setProperty('overflow', 'hidden', 'important');
-      el.style.setProperty('margin', '0', 'important');
-      el.style.setProperty('padding', '0', 'important');
-      el.style.setProperty('border', 'none', 'important');
+  // 首次调用: 把 iframe 从消息流中剥离,移到酒馆 body 直接子元素
+  // 这样它彻底脱离消息流,不会随消息滚动,也不会被 .mes_text 样式干扰
+  if (iframe.parentElement !== parent_doc.body) {
+    const $old_parent = $(iframe).parent();
+    // 隐藏消息流里残留的空占位父元素(code/pre/div),但不动 .mes_text 本身
+    if ($old_parent.length && !$old_parent.hasClass('mes_text') && !$old_parent.is('body')) {
+      $old_parent.css('display', 'none');
     }
+    parent_doc.body.appendChild(iframe);
+    console.info('[天选者状态面板] 已将 iframe 移至酒馆 body 下');
   }
-  console.info(`[天选者状态面板] 已中和 ${ancestors.length} 个祖先元素的 transform/filter`);
+
+  // fixed 定位到左侧背景区
+  const s = iframe.style;
+  s.setProperty('position', 'fixed', 'important');
+  s.setProperty('left', `${PANEL_MARGIN}px`, 'important');
+  s.setProperty('top', `${PANEL_MARGIN}px`, 'important');
+  s.setProperty('height', `calc(100vh - ${PANEL_MARGIN * 2}px)`, 'important');
+  s.setProperty('width', `${PANEL_WIDTH}px`, 'important');
+  s.setProperty('z-index', '9999', 'important');
+  s.setProperty('border', '1px solid rgba(45, 53, 97, 0.6)', 'important');
+  s.setProperty('border-radius', '12px', 'important');
+  s.setProperty('box-shadow', '0 8px 32px rgba(0, 0, 0, 0.5)', 'important');
+  s.setProperty('background', 'transparent', 'important');
 }
 
 function cleanup() {
-  const parent_doc = window.parent.document;
-  parent_doc.getElementById(CONTROL_ID)?.remove();
-  parent_doc.getElementById(IFRAME_STYLE_ID)?.remove();
-  parent_doc.getElementById('tavern-status-panel-neutralize')?.remove();
+  // 卸载时移除 iframe(已移到 body 下,不会随消息流自动清理)
+  const iframe = window.frameElement as HTMLIFrameElement | null;
+  if (iframe && iframe.parentElement === window.parent.document.body) {
+    iframe.remove();
+  }
 }
 
 $(async () => {
-  // 不 detach iframe,留在消息流中(避免酒馆助手把它当作全局脚本 iframe 导致 getMessageId 报错)
-  // 1. 先中和祖先链上的 transform/filter(否则 position:fixed 相对祖先而非视口)
-  neutralizeAncestors();
-  // 2. 注入控制条和样式
-  ensureControls(getDefaultLayout());
+  detachAndPinIframe();
 
   const iframe = window.frameElement as HTMLIFrameElement | null;
   if (iframe) {
-    // 持续清空 iframe 的 inline style,防止酒馆助手覆盖
-    // (inline !important 会覆盖 stylesheet !important,必须清空 inline 让注入的 <style> 生效)
-    const observer = new MutationObserver(() => {
-      if (iframe.hasAttribute('style')) {
-        iframe.removeAttribute('style');
-      }
-      // 祖先可能被酒馆助手重新设置 transform,定期中和
-      neutralizeAncestors();
-    });
-    observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
-    // 高频兜底:requestAnimationFrame 比 setInterval 200ms 更快
-    let raf_id = 0;
-    const loop = () => {
-      if (iframe.hasAttribute('style')) {
-        iframe.removeAttribute('style');
-      }
-      raf_id = requestAnimationFrame(loop);
-    };
-    raf_id = requestAnimationFrame(loop);
-    window.parent.addEventListener('resize', () => applyLayout(getDefaultLayout()));
+    // 酒馆助手可能调整 iframe style,监听并重新应用
+    const observer = new MutationObserver(detachAndPinIframe);
+    observer.observe(iframe, { attributes: true, attributeFilter: ['style', 'class'] });
+    // 兜底定时器
+    setInterval(detachAndPinIframe, 1000);
     $(window).on('pagehide', () => {
       observer.disconnect();
-      cancelAnimationFrame(raf_id);
       cleanup();
     });
   }
 
+  // store 内部用 getVariables 容错读取,schema 填充默认值
+  // 即使 MVU 未初始化当前楼层,面板也能用默认数据(1级、幸运999)显示
   try {
     createApp(App).use(createPinia()).mount('#app');
-    console.info('[天选者状态面板] 已挂载,支持拖动/缩放/折叠');
+    console.info('[天选者状态面板] 已挂载到左侧背景区, iframe 尺寸:', iframe?.offsetWidth, 'x', iframe?.offsetHeight);
   } catch (e) {
     console.error('[天选者状态面板] 挂载失败', e);
     throw e;
