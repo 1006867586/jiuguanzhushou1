@@ -1,0 +1,62 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* 背景色 */
+  --c-bg-from: #0f0f23;
+  --c-bg-mid: #1a1a3e;
+  --c-bg-to: #16213e;
+
+  /* 卡片 */
+  --c-card-from: rgba(30, 30, 63, 0.95);
+  --c-card-to: rgba(21, 21, 48, 0.95);
+  --c-card-border: rgba(45, 53, 97, 0.5);
+  --c-card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+
+  /* 文字 */
+  --c-text: #e8e0d5;
+  --c-text-bright: #f0e6d2;
+  --c-text-dim: #8b9bb4;
+  --c-text-muted: #a0aec0;
+  --c-accent: #a8d8ea;
+  --c-accent-bright: #a8b9ff;
+
+  /* 主题渐变 */
+  --grad-primary: linear-gradient(135deg, #667eea, #764ba2);
+  --grad-bg: linear-gradient(135deg, var(--c-bg-from) 0%, var(--c-bg-mid) 50%, var(--c-bg-to) 100%);
+  --grad-card: linear-gradient(180deg, var(--c-card-from) 0%, var(--c-card-to) 100%);
+  --grad-header: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(22, 33, 62, 0.95) 100%);
+
+  /* 品级配色 */
+  --c-mythic: #fc8181;
+  --c-legendary: #f6e05e;
+  --c-epic: #b794f4;
+  --c-rare: #63b3ed;
+  --c-common: #b0b0b0;
+
+  --c-mythic-bg: rgba(245, 101, 101, 0.08);
+  --c-mythic-border: rgba(245, 101, 101, 0.25);
+  --c-legendary-bg: rgba(236, 201, 75, 0.08);
+  --c-legendary-border: rgba(236, 201, 75, 0.25);
+  --c-epic-bg: rgba(159, 122, 234, 0.08);
+  --c-epic-border: rgba(159, 122, 234, 0.25);
+  --c-rare-bg: rgba(66, 153, 225, 0.08);
+  --c-rare-border: rgba(66, 153, 225, 0.25);
+  --c-common-bg: rgba(200, 200, 200, 0.08);
+  --c-common-border: rgba(200, 200, 200, 0.25);
+
+  /* 字体 */
+  --font-main: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--grad-bg);
+  min-height: 100vh;
+  color: var(--c-text);
+  padding: 20px;
+  line-height: 1.6;
+}

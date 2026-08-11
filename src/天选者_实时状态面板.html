@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>天选者 · 实时状态面板</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', 'Microsoft YaHei', system-ui, sans-serif; background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #16213e 100%); min-height: 100vh; color: #e8e0d5; padding: 20px; line-height: 1.6; }
+  .container { max-width: 1000px; margin: 0 auto; }
+  input, select, button { font-family: inherit; }
+  .editable { background: rgba(102,126,234,0.1); border: 1px dashed rgba(102,126,234,0.4); border-radius: 6px; padding: 2px 8px; color: #a8d8ea; cursor: text; transition: all 0.2s; min-width: 40px; display: inline-block; text-align: center; }
+  .editable:hover { background: rgba(102,126,234,0.2); border-style: solid; }
+  .editable:focus { outline: none; background: rgba(102,126,234,0.25); border-color: #667eea; color: #fff; }
+  .card { background: linear-gradient(180deg, rgba(30,30,63,0.95) 0%, rgba(21,21,48,0.95) 100%); border-radius: 20px; padding: 20px; border: 1px solid rgba(45,53,97,0.5); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .btn { padding: 8px 16px; border: none; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(102,126,234,0.4); }
+  .btn-secondary { background: rgba(255,255,255,0.08); color: #a0aec0; border: 1px solid rgba(255,255,255,0.1); }
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); color: #e2e8f0; }
+  .tag { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; border: 1px solid; display: inline-block; }
+  .stat-track { flex: 1; height: 10px; background: rgba(255,255,255,0.06); border-radius: 5px; overflow: hidden; }
+  .stat-fill { height: 100%; border-radius: 5px; transition: width 0.5s ease; }
+  .equip-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; margin-bottom: 8px; }
+  .inv-item { padding: 12px 8px; border-radius: 10px; text-align: center; }
+  .skill-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; margin-bottom: 8px; }
+  .quest-item { padding: 12px; border-radius: 10px; margin-bottom: 8px; }
+  .mythic { background: rgba(245,101,101,0.08); border: 1px solid rgba(245,101,101,0.25); }
+  .legendary { background: rgba(236,201,75,0.08); border: 1px solid rgba(236,201,75,0.25); }
+  .epic { background: rgba(159,122,234,0.08); border: 1px solid rgba(159,122,234,0.25); }
+  .rare { background: rgba(66,153,225,0.08); border: 1px solid rgba(66,153,225,0.25); }
+  .common { background: rgba(200,200,200,0.08); border: 1px solid rgba(200,200,200,0.25); }
+  .c-mythic { color: #fc8181; } .c-legendary { color: #f6e05e; } .c-epic { color: #b794f4; }
+  .c-rare { color: #63b3ed; } .c-common { color: #b0b0b0; }
+  .tab-btn { flex: 1; padding: 10px 14px; border: none; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; background: transparent; color: #8b9bb4; transition: all 0.2s; }
+  .tab-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 12px rgba(102,126,234,0.3); }
+  .panel { display: none; } .panel.active { display: block; }
+  .section-title { font-size: 15px; font-weight: 600; color: #f0e6d2; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .number-input { width: 55px; text-align: center; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #e2e8f0; padding: 3px; font-size: 13px; }
+  .number-input:focus { outline: none; border-color: #667eea; }
+  .progress-track { flex: 1; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); border-radius: 4px; transition: width 0.5s ease; }
+  .header { background: linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%); border-radius: 20px; padding: 20px 24px; margin-bottom: 16px; border: 1px solid rgba(45,53,97,0.6); display: flex; align-items: center; gap: 14px; }
+  .main-grid { display: grid; grid-template-columns: 300px 1fr; gap: 16px; }
+  @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎲</div>
+    <div style="flex: 1;">
+      <div style="font-size: 20px; font-weight: 700; color: #f0e6d2;">天选者 · 实时状态面板</div>
+      <div style="font-size: 11px; color: #8b9bb4;">点击任意蓝色高亮文字即可编辑 · 数据自动保存</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-secondary" onclick="exportData()">📤 导出</button>
+      <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">📥 导入</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+  </div>
+
+  <div class="main-grid">
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <div class="card" style="text-align: center; padding: 24px 16px;">
+        <div style="width: 110px; height: 110px; margin: 0 auto 12px; background: linear-gradient(135deg, #2d3561, #1e1e3f); border-radius: 50%; border: 3px solid #667eea; display: flex; align-items: center; justify-content: center; font-size: 52px;">👤</div>
+        <div class="editable" contenteditable="true" data-key="charName" style="font-size: 18px; font-weight: 700; color: #f0e6d2; min-width: 80px;">{{user}}</div>
+        <div style="font-size: 13px; color: #a8d8ea; margin-top: 6px;">
+          Lv.<span class="editable" contenteditable="true" data-key="level" style="min-width: 30px;">87</span>
+          <span class="editable" contenteditable="true" data-key="className" style="min-width: 60px;">天选者</span>
+        </div>
+        <div style="display: flex; gap: 6px; justify-content: center; margin-top: 10px; flex-wrap: wrap;">
+          <span class="tag" style="background: rgba(102,126,234,0.15); color: #a8b9ff; border-color: rgba(102,126,234,0.3);">异界转生者</span>
+          <span class="tag" style="background: rgba(255,193,7,0.12); color: #ffd54f; border-color: rgba(255,193,7,0.3);">幸运MAX</span>
+        </div>
+        <div style="margin-top: 16px;">
+          <div style="display: flex; justify-content: space-between; font-size: 11px; color: #8b9bb4; margin-bottom: 4px;">
+            <span>EXP</span>
+            <span><span class="editable" contenteditable="true" data-key="expCurrent" style="min-width: 50px;">87450</span> / <span class="editable" contenteditable="true" data-key="expMax" style="min-width: 50px;">92000</span></span>
+          </div>
+          <div class="stat-track"><div class="stat-fill" id="expBar" style="background: linear-gradient(90deg, #667eea, #764ba2); width: 0%;"></div></div>
+          <div style="font-size: 11px; color: #ffd54f; margin-top: 4px; text-align: right;" id="expHint"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">📊 基础属性 <span style="font-size: 11px; color: #8b9bb4; font-weight: 400;">(点击数字修改)</span></div>
+        <div id="statsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">💕 羁绊伙伴</div>
+        <div style="display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(168,216,234,0.04); border-radius: 12px; border: 1px solid rgba(168,216,234,0.1);">
+          <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #764ba2, #667eea); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎵</div>
+          <div style="flex: 1;">
+            <div style="font-size: 14px; font-weight: 600; color: #f0e6d2;">艾米莉亚</div>
+            <div style="font-size: 11px; color: #a8d8ea;">Lv.<span class="editable" contenteditable="true" data-key="partnerLevel" style="min-width: 24px;">82</span> 圣音使徒(准)</div>
+            <div style="margin-top: 4px;">
+              <div style="font-size: 11px; color: #ff6b9d;">❤️ 羁绊 Lv.<span class="editable" contenteditable="true" data-key="bondLevel" style="min-width: 20px;">10</span></div>
+              <div class="progress-track" style="height: 5px; margin-top: 2px;"><div class="progress-fill" style="width: 100%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column;">
+      <div style="display: flex; gap: 4px; background: rgba(255,255,255,0.04); border-radius: 12px; padding: 4px; margin-bottom: 14px;">
+        <button class="tab-btn active" onclick="switchTab('equipment')">⚔️ 装备</button>
+        <button class="tab-btn" onclick="switchTab('items')">🎒 背包</button>
+        <button class="tab-btn" onclick="switchTab('skills')">✨ 技能</button>
+        <button class="tab-btn" onclick="switchTab('quests')">📜 任务</button>
+      </div>
+
+      <div class="panel active" id="panel-equipment">
+        <div class="card" style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div class="section-title" style="margin: 0;">🔥 神话装备</div>
+            <button class="btn btn-secondary" onclick="addMythic()" style="padding: 5px 12px; font-size: 11px;">+ 添加</button>
+          </div>
+          <div id="mythicList"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">🛡️ 当前装备</div>
+          <div id="equipGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-items">
+        <div class="card" style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div class="section-title" style="margin: 0;">🎒 虚空背包</div>
+            <button class="btn btn-secondary" onclick="addItem()" style="padding: 5px 12px; font-size: 11px;">+ 添加</button>
+          </div>
+          <div id="invGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">🧪 消耗品</div>
+          <div id="consList"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-skills">
+        <div class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div class="section-title" style="margin: 0;">🌟 技能树</div>
+            <button class="btn btn-secondary" onclick="addSkill()" style="padding: 5px 12px; font-size: 11px;">+ 添加</button>
+          </div>
+          <div id="skillList"></div>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-quests">
+        <div class="card" style="margin-bottom: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <div class="section-title" style="margin: 0;">📍 进行中</div>
+            <button class="btn btn-secondary" onclick="addQuest()" style="padding: 5px 12px; font-size: 11px;">+ 添加</button>
+          </div>
+          <div id="activeQuestList"></div>
+        </div>
+        <div class="card">
+          <div class="section-title">✅ 已完成</div>
+          <div id="completedQuestList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top: 16px; background: linear-gradient(135deg, rgba(26,26,46,0.95) 0%, rgba(22,33,62,0.95) 100%); border-radius: 20px; padding: 18px 24px; border: 1px solid rgba(45,53,97,0.5); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+      <div style="text-align: center;"><div style="font-size: 11px; color: #8b9bb4;">💰 金币</div><div class="editable" contenteditable="true" data-key="gold" style="font-size: 18px; font-weight: 700; color: #ffd54f; margin-top: 2px; min-width: 80px;">128450</div></div>
+      <div style="text-align: center;"><div style="font-size: 11px; color: #8b9bb4;">🏆 成就</div><div class="editable" contenteditable="true" data-key="achieve" style="font-size: 18px; font-weight: 700; color: #a8d8ea; margin-top: 2px; min-width: 40px;">47</div></div>
+      <div style="text-align: center;"><div style="font-size: 11px; color: #8b9bb4;">👹 Boss</div><div class="editable" contenteditable="true" data-key="bossKills" style="font-size: 18px; font-weight: 700; color: #ff6b9d; margin-top: 2px; min-width: 40px;">23</div></div>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 11px; color: #8b9bb4;">当前位置</div>
+      <div class="editable" contenteditable="true" data-key="location" style="font-size: 14px; color: #a8d8ea; font-weight: 600; margin-top: 2px; min-width: 150px;">🗺️ 黄昏之门 · 最终战场</div>
+    </div>
+  </div>
+</div>
+
+<script>
+let gameData = {
+  charName: '{{user}}', level: 87, className: '天选者',
+  expCurrent: 87450, expMax: 92000,
+  partnerLevel: 82, bondLevel: 10,
+  gold: 128450, achieve: 47, bossKills: 23,
+  location: '🗺️ 黄昏之门 · 最终战场',
+  stats: [
+    { name: '力量 (STR)', key: 'str', value: 68, max: 100, color: '#ff6b6b', icon: '💪' },
+    { name: '敏捷 (AGI)', key: 'agi', value: 75, max: 100, color: '#4ecdc4', icon: '⚡' },
+    { name: '智力 (INT)', key: 'int', value: 82, max: 100, color: '#667eea', icon: '🧠' },
+    { name: '体质 (VIT)', key: 'vit', value: 71, max: 100, color: '#95e1d3', icon: '❤️' },
+    { name: '精神 (MND)', key: 'mnd', value: 88, max: 100, color: '#f38181', icon: '🔮' },
+    { name: '幸运 (LUK)', key: 'luk', value: 999, max: 999, color: '#ffd54f', icon: '🍀', special: true }
+  ],
+  mythicItems: [
+    { name: '命运之骰', type: '饰品', rarity: 'mythic', desc: '可重掷任何随机结果，每日3次', icon: '🎲', active: true },
+    { name: '虚空背包', type: '容器', rarity: 'mythic', desc: '无限容量，内部时间静止', icon: '🎒', active: true },
+    { name: '时之沙漏', type: '饰品', rarity: 'mythic', desc: '局部时间回溯5秒，冷却1小时', icon: '⏳', active: true },
+    { name: '永恒誓约之剑', type: '武器', rarity: 'mythic', desc: '伤害与羁绊深度挂钩', icon: '⚔️', active: true },
+    { name: '万灵图鉴', type: '道具', rarity: 'mythic', desc: '收录任何怪物/技能，可复制使用', icon: '📖', active: true },
+    { name: '世界树之种', type: '消耗品', rarity: 'mythic', desc: '存档当前世界状态，一次性', icon: '🌱', active: true },
+    { name: '七弦圣琴', type: '武器', rarity: 'mythic', desc: '艾米莉亚专属，奏响可逆转因果', icon: '🎵', active: false, holder: '艾米莉亚' }
+  ],
+  currentEquip: [
+    { slot: '主手', name: '永恒誓约之剑 +12', rarity: 'mythic', icon: '⚔️' },
+    { slot: '副手', name: '命运之骰', rarity: 'mythic', icon: '🎲' },
+    { slot: '头部', name: '天选者之冠', rarity: 'legendary', icon: '👑' },
+    { slot: '身体', name: '虚空行者斗篷 +8', rarity: 'epic', icon: '🧥' },
+    { slot: '饰品', name: '时之沙漏', rarity: 'mythic', icon: '⏳' },
+    { slot: '鞋子', name: '风行者软靴 +5', rarity: 'rare', icon: '👢' }
+  ],
+  inventory: [
+    { name: '传说强化石', qty: 12, rarity: 'legendary', icon: '💎' },
+    { name: '史诗附魔卷轴', qty: 5, rarity: 'epic', icon: '📜' },
+    { name: '怪物图鉴残页', qty: 47, rarity: 'rare', icon: '📄' },
+    { name: '艾米莉亚的画像', qty: 1, rarity: 'mythic', icon: '🖼️' },
+    { name: '异世界奶茶配方', qty: 1, rarity: 'epic', icon: '🧋' },
+    { name: '母亲的眼镜盒', qty: 1, rarity: 'legendary', icon: '👓' },
+    { name: '设计草图集', qty: 1, rarity: 'common', icon: '📐' },
+    { name: '鲁特琴弦', qty: 3, rarity: 'common', icon: '🎸' }
+  ],
+  consumables: [
+    { name: '高级红色恢复药剂', qty: 25, effect: '恢复HP 500', icon: '🔴' },
+    { name: '高级蓝色魔力药剂', qty: 18, effect: '恢复MP 400', icon: '🔵' },
+    { name: '绿色解毒剂', qty: 10, effect: '解除中毒', icon: '🟢' },
+    { name: '黄色活力药剂', qty: 8, effect: '解除疲劳', icon: '🟡' },
+    { name: '复活羽毛', qty: 3, effect: '原地复活', icon: '🪶' }
+  ],
+  skills: [
+    { name: '命运重掷', type: '主动', cd: '3次/日', desc: '重掷任何随机结果', unlocked: true, icon: '🎲' },
+    { name: '虚空收纳', type: '被动', cd: '-', desc: '无限背包空间', unlocked: true, icon: '🎒' },
+    { name: '时间回溯', type: '主动', cd: '1小时', desc: '回溯5秒时间', unlocked: true, icon: '⏳' },
+    { name: '誓约斩击', type: '主动', cd: '15秒', desc: '基于羁绊造成伤害', unlocked: true, icon: '⚔️' },
+    { name: '万灵复制', type: '主动', cd: '30秒', desc: '复制敌人技能', unlocked: true, icon: '📖' },
+    { name: '世界存档', type: '主动', cd: '一次性', desc: '存档世界状态', unlocked: true, icon: '🌱' },
+    { name: '天选觉醒', type: '终极', cd: '剧情触发', desc: '改写世界规则', unlocked: false, icon: '✨' }
+  ],
+  activeQuests: [
+    { name: '【终章】七弦圣琴', grade: 'SSS', progress: 85, desc: '与艾米莉亚共同奏响七弦圣琴，阻止诸神黄昏', icon: '🎵' },
+    { name: '【主线】银弦家的复兴', grade: 'S', progress: 60, desc: '收集散落的家族典籍，恢复银弦家声誉', icon: '📚' }
+  ],
+  completedQuests: [
+    { name: '时之迷宫探索', grade: 'A', icon: '⏳' },
+    { name: '王都地下游击战', grade: 'S', icon: '⚔️' },
+    { name: '知识深渊调查', grade: 'A', icon: '📖' },
+    { name: '世界树之森修行', grade: 'SS', icon: '🌳' },
+    { name: '莫里亚蒂讨伐', grade: 'S', icon: '👹' }
+  ]
+};
+
+function loadFromStorage() {
+  try {
+    const saved = localStorage.getItem('rpgStatusData');
+    if (saved) Object.assign(gameData, JSON.parse(saved));
+  } catch(e) {}
+}
+function saveToStorage() {
+  try { localStorage.setItem('rpgStatusData', JSON.stringify(gameData)); } catch(e) {}
+}
+
+function renderStats() {
+  const container = document.getElementById('statsList');
+  container.innerHTML = gameData.stats.map((s, i) => {
+    const pct = s.special ? 100 : Math.min(100, s.value / s.max * 100);
+    return `<div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 15px; width: 22px; text-align: center;">${s.icon}</span>
+      <span style="font-size: 12px; color: #a0aec0; width: 85px;">${s.name}</span>
+      <div class="stat-track"><div class="stat-fill" style="width: ${pct}%; background: ${s.color}; box-shadow: 0 0 8px ${s.color}40;"></div></div>
+      <input type="number" class="number-input" value="${s.value}" onchange="updateStat(${i}, this.value)" min="0">
+      <span style="font-size: 11px; color: #8b9bb4;">/</span>
+      <input type="number" class="number-input" value="${s.max}" onchange="updateStatMax(${i}, this.value)" min="1">
+    </div>`;
+  }).join('');
+}
+function renderExp() {
+  const pct = Math.min(100, gameData.expCurrent / gameData.expMax * 100);
+  document.getElementById('expBar').style.width = pct + '%';
+  document.getElementById('expHint').textContent = `↑ ${pct.toFixed(1)}% — 距离 Lv.${parseInt(gameData.level)+1} 还需 ${gameData.expMax - gameData.expCurrent} EXP`;
+}
+function renderMythic() {
+  const container = document.getElementById('mythicList');
+  container.innerHTML = gameData.mythicItems.map((item, i) => `
+    <div class="equip-item ${item.rarity} ${item.active ? '' : 'common'}" style="opacity: ${item.active ? 1 : 0.5};">
+      <span style="font-size: 26px; width: 36px; text-align: center;">${item.icon}</span>
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span class="editable c-${item.rarity}" contenteditable="true" data-mythic-name="${i}" style="font-size: 13px; font-weight: 600; min-width: 60px;">${item.name}</span>
+          <span style="font-size: 10px; color: #8b9bb4; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${item.type}</span>
+          ${item.holder ? `<span style="font-size: 10px; color: #a8d8ea;">👤 ${item.holder}</span>` : ''}
+        </div>
+        <div class="editable" contenteditable="true" data-mythic-desc="${i}" style="font-size: 11px; color: #8b9bb4; margin-top: 2px; min-width: 100px;">${item.desc}</div>
+      </div>
+      <button onclick="toggleMythic(${i})" style="font-size: 11px; padding: 4px 10px; border: none; border-radius: 6px; cursor: pointer; background: ${item.active ? 'rgba(72,187,120,0.15)' : 'rgba(255,255,255,0.06)'}; color: ${item.active ? '#48bb78' : '#718096'}; font-weight: 600;">${item.active ? '● 已激活' : '○ 未激活'}</button>
+      <button onclick="removeMythic(${i})" style="font-size: 11px; padding: 4px 8px; border: none; border-radius: 6px; cursor: pointer; background: rgba(245,101,101,0.15); color: #fc8181; margin-left: 4px;">✕</button>
+    </div>
+  `).join('');
+}
+function renderEquip() {
+  const container = document.getElementById('equipGrid');
+  container.innerHTML = gameData.currentEquip.map((item, i) => `
+    <div class="${item.rarity}" style="padding: 12px 8px; border-radius: 10px; text-align: center;">
+      <div style="font-size: 11px; color: #8b9bb4; margin-bottom: 4px;">${item.slot}</div>
+      <div style="font-size: 28px; margin-bottom: 4px;">${item.icon}</div>
+      <div class="editable c-${item.rarity}" contenteditable="true" data-equip-name="${i}" style="font-size: 11px; font-weight: 600; min-width: 60px;">${item.name}</div>
+    </div>
+  `).join('');
+}
+function renderInventory() {
+  const grid = document.getElementById('invGrid');
+  grid.innerHTML = gameData.inventory.map((item, i) => `
+    <div class="inv-item ${item.rarity}">
+      <span style="font-size: 28px; display: block; margin-bottom: 4px;">${item.icon}</span>
+      <div class="editable c-${item.rarity}" contenteditable="true" data-inv-name="${i}" style="font-size: 10px; font-weight: 600; min-width: 40px;">${item.name}</div>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 2px;">
+        <span style="font-size: 10px; color: #8b9bb4;">x</span>
+        <input type="number" class="number-input" style="width: 36px;" value="${item.qty}" onchange="updateInvQty(${i}, this.value)" min="0">
+      </div>
+      <button onclick="removeItem(${i})" style="font-size: 9px; padding: 2px 6px; border: none; border-radius: 4px; cursor: pointer; background: rgba(245,101,101,0.15); color: #fc8181; margin-top: 4px;">✕</button>
+    </div>
+  `).join('');
+
+  const list = document.getElementById('consList');
+  list.innerHTML = gameData.consumables.map((item, i) => `
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 6px;">
+      <span style="font-size: 20px;">${item.icon}</span>
+      <div style="flex: 1;">
+        <div style="font-size: 12px; color: #e2e8f0;">${item.name}</div>
+        <div style="font-size: 11px; color: #8b9bb4;">${item.effect}</div>
+      </div>
+      <input type="number" class="number-input" value="${item.qty}" onchange="updateConsQty(${i}, this.value)" min="0">
+      <button onclick="removeCons(${i})" style="font-size: 10px; padding: 2px 6px; border: none; border-radius: 4px; cursor: pointer; background: rgba(245,101,101,0.15); color: #fc8181;">✕</button>
+    </div>
+  `).join('');
+}
+function renderSkills() {
+  const container = document.getElementById('skillList');
+  container.innerHTML = gameData.skills.map((s, i) => `
+    <div class="skill-item ${s.unlocked ? '' : 'common'}" style="opacity: ${s.unlocked ? 1 : 0.5};">
+      <span style="font-size: 28px; width: 40px; text-align: center;">${s.icon}</span>
+      <div style="flex: 1;">
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          <span class="editable" contenteditable="true" data-skill-name="${i}" style="font-size: 14px; font-weight: 600; color: ${s.unlocked ? '#e2e8f0' : '#4a5568'}; min-width: 60px;">${s.name}</span>
+          <span style="font-size: 10px; color: #8b9bb4; background: rgba(255,255,255,0.06); padding: 1px 6px; border-radius: 4px;">${s.type}</span>
+          <button onclick="toggleSkill(${i})" style="font-size: 10px; padding: 2px 8px; border: none; border-radius: 4px; cursor: pointer; background: ${s.unlocked ? 'rgba(72,187,120,0.1)' : 'rgba(255,255,255,0.04)'}; color: ${s.unlocked ? '#48bb78' : '#718096'};">${s.unlocked ? '✓ 已解锁' : '🔒 未解锁'}</button>
+        </div>
+        <div class="editable" contenteditable="true" data-skill-desc="${i}" style="font-size: 11px; color: #8b9bb4; margin-top: 2px; min-width: 100px;">${s.desc}</div>
+      </div>
+      <div style="text-align: right;">
+        <div style="font-size: 10px; color: #8b9bb4;">CD</div>
+        <div class="editable" contenteditable="true" data-skill-cd="${i}" style="font-size: 13px; color: ${s.unlocked ? '#a8d8ea' : '#4a5568'}; font-weight: 600; min-width: 40px;">${s.cd}</div>
+      </div>
+      <button onclick="removeSkill(${i})" style="font-size: 10px; padding: 3px 8px; border: none; border-radius: 6px; cursor: pointer; background: rgba(245,101,101,0.15); color: #fc8181;">✕</button>
+    </div>
+  `).join('');
+}
+function renderQuests() {
+  const active = document.getElementById('activeQuestList');
+  active.innerHTML = gameData.activeQuests.map((q, i) => `
+    <div class="quest-item" style="background: rgba(102,126,234,0.06); border: 1px solid rgba(102,126,234,0.2);">
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+        <span style="font-size: 20px;">${q.icon}</span>
+        <span class="editable" contenteditable="true" data-quest-name="${i}" style="font-size: 14px; font-weight: 600; color: #e2e8f0; flex: 1; min-width: 80px;">${q.name}</span>
+        <span style="font-size: 10px; color: #fc8181; background: rgba(245,101,101,0.12); padding: 2px 8px; border-radius: 4px; font-weight: 600;">${q.grade}级</span>
+        <button onclick="completeQuest(${i})" style="font-size: 10px; padding: 3px 8px; border: none; border-radius: 6px; cursor: pointer; background: rgba(72,187,120,0.15); color: #48bb78;">✓ 完成</button>
+        <button onclick="removeQuest(${i})" style="font-size: 10px; padding: 3px 8px; border: none; border-radius: 6px; cursor: pointer; background: rgba(245,101,101,0.15); color: #fc8181;">✕</button>
+      </div>
+      <div class="editable" contenteditable="true" data-quest-desc="${i}" style="font-size: 11px; color: #8b9bb4; margin-bottom: 8px; min-width: 100px;">${q.desc}</div>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="progress-track"><div class="progress-fill" style="width: ${q.progress}%;"></div></div>
+        <input type="number" class="number-input" value="${q.progress}" onchange="updateQuestProgress(${i}, this.value)" min="0" max="100" style="width: 45px;">
+        <span style="font-size: 11px; color: #8b9bb4;">%</span>
+      </div>
+    </div>
+  `).join('');
+
+  const completed = document.getElementById('completedQuestList');
+  completed.innerHTML = gameData.completedQuests.map((q, i) => `
+    <div style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; margin-bottom: 6px;">
+      <span style="font-size: 18px;">${q.icon}</span>
+      <span style="font-size: 12px; color: #718096; flex: 1; text-decoration: line-through;">${q.name}</span>
+      <span style="font-size: 10px; color: #48bb78; background: rgba(72,187,120,0.1); padding: 2px 8px; border-radius: 4px;">${q.grade} ✓</span>
+      <button onclick="uncompleteQuest(${i})" style="font-size: 10px; padding: 2px 6px; border: none; border-radius: 4px; cursor: pointer; background: rgba(255,255,255,0.06); color: #8b9bb4;">↩</button>
+    </div>
+  `).join('');
+}
+
+function updateStat(index, value) { gameData.stats[index].value = parseInt(value) || 0; renderStats(); saveToStorage(); }
+function updateStatMax(index, value) { gameData.stats[index].max = parseInt(value) || 1; renderStats(); saveToStorage(); }
+function updateInvQty(index, value) { gameData.inventory[index].qty = parseInt(value) || 0; renderInventory(); saveToStorage(); }
+function updateConsQty(index, value) { gameData.consumables[index].qty = parseInt(value) || 0; renderInventory(); saveToStorage(); }
+function updateQuestProgress(index, value) { gameData.activeQuests[index].progress = Math.min(100, Math.max(0, parseInt(value) || 0)); renderQuests(); saveToStorage(); }
+function toggleMythic(index) { gameData.mythicItems[index].active = !gameData.mythicItems[index].active; renderMythic(); saveToStorage(); }
+function toggleSkill(index) { gameData.skills[index].unlocked = !gameData.skills[index].unlocked; renderSkills(); saveToStorage(); }
+function completeQuest(index) { const q = gameData.activeQuests.splice(index, 1)[0]; gameData.completedQuests.push({ name: q.name, grade: q.grade, icon: q.icon }); renderQuests(); saveToStorage(); }
+function uncompleteQuest(index) { const q = gameData.completedQuests.splice(index, 1)[0]; gameData.activeQuests.push({ name: q.name, grade: q.grade, progress: 100, desc: '', icon: q.icon }); renderQuests(); saveToStorage(); }
+
+function addMythic() { gameData.mythicItems.push({ name: '新装备', type: '饰品', rarity: 'mythic', desc: '描述', icon: '✨', active: true }); renderMythic(); saveToStorage(); }
+function removeMythic(index) { gameData.mythicItems.splice(index, 1); renderMythic(); saveToStorage(); }
+function addItem() { gameData.inventory.push({ name: '新物品', qty: 1, rarity: 'common', icon: '📦' }); renderInventory(); saveToStorage(); }
+function removeItem(index) { gameData.inventory.splice(index, 1); renderInventory(); saveToStorage(); }
+function removeCons(index) { gameData.consumables.splice(index, 1); renderInventory(); saveToStorage(); }
+function addSkill() { gameData.skills.push({ name: '新技能', type: '主动', cd: '-', desc: '技能描述', unlocked: false, icon: '✨' }); renderSkills(); saveToStorage(); }
+function removeSkill(index) { gameData.skills.splice(index, 1); renderSkills(); saveToStorage(); }
+function addQuest() { gameData.activeQuests.push({ name: '新任务', grade: 'C', progress: 0, desc: '任务描述', icon: '📌' }); renderQuests(); saveToStorage(); }
+function removeQuest(index) { gameData.activeQuests.splice(index, 1); renderQuests(); saveToStorage(); }
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(gameData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'rpg_status_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+function importData(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      Object.assign(gameData, data);
+      saveToStorage();
+      fullRender();
+      alert('数据导入成功！');
+    } catch(err) { alert('导入失败：文件格式错误'); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function setupEditableListeners() {
+  document.querySelector('.container').addEventListener('blur', function(e) {
+    if (e.target.classList.contains('editable')) {
+      const key = e.target.dataset.key;
+      if (key) {
+        const val = e.target.textContent.trim();
+        if (['level', 'expCurrent', 'expMax', 'partnerLevel', 'bondLevel', 'gold', 'achieve', 'bossKills'].includes(key)) {
+          gameData[key] = parseInt(val) || 0;
+          if (key === 'expCurrent' || key === 'expMax') renderExp();
+        } else { gameData[key] = val; }
+        saveToStorage();
+      }
+      const mi = e.target.dataset.mythicName; if (mi !== undefined) { gameData.mythicItems[mi].name = e.target.textContent.trim(); saveToStorage(); }
+      const md = e.target.dataset.mythicDesc; if (md !== undefined) { gameData.mythicItems[md].desc = e.target.textContent.trim(); saveToStorage(); }
+      const en = e.target.dataset.equipName; if (en !== undefined) { gameData.currentEquip[en].name = e.target.textContent.trim(); saveToStorage(); }
+      const iv = e.target.dataset.invName; if (iv !== undefined) { gameData.inventory[iv].name = e.target.textContent.trim(); saveToStorage(); }
+      const sn = e.target.dataset.skillName; if (sn !== undefined) { gameData.skills[sn].name = e.target.textContent.trim(); saveToStorage(); }
+      const sd = e.target.dataset.skillDesc; if (sd !== undefined) { gameData.skills[sd].desc = e.target.textContent.trim(); saveToStorage(); }
+      const sc = e.target.dataset.skillCd; if (sc !== undefined) { gameData.skills[sc].cd = e.target.textContent.trim(); saveToStorage(); }
+      const qn = e.target.dataset.questName; if (qn !== undefined) { gameData.activeQuests[qn].name = e.target.textContent.trim(); saveToStorage(); }
+      const qd = e.target.dataset.questDesc; if (qd !== undefined) { gameData.activeQuests[qd].desc = e.target.textContent.trim(); saveToStorage(); }
+    }
+  }, true);
+}
+
+function fullRender() {
+  renderStats(); renderExp(); renderMythic(); renderEquip();
+  renderInventory(); renderSkills(); renderQuests();
+}
+
+loadFromStorage();
+fullRender();
+setupEditableListeners();
+</script>
+</body>
+</html>
