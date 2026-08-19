@@ -28,7 +28,10 @@ export default [
       ...eslintPluginBetterTailwindcss.configs['recommended-error'].rules,
       'better-tailwindcss/enforce-consistent-line-wrapping': ['off', { preferSingleLine: true, printWidth: 120 }],
       'better-tailwindcss/no-unregistered-classes': ['off', { ignore: ['fa-*'] }],
+<<<<<<< HEAD
       'better-tailwindcss/no-unknown-classes': 'off',
+=======
+>>>>>>> fe7d6686eaa214f144c2a734be2e26ca399f3d3d
     },
     settings: {
       'better-tailwindcss': {
