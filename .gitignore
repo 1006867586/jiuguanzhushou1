@@ -1,5 +1,8 @@
 node_modules
+<<<<<<< HEAD
 .pnpm-store
+=======
+>>>>>>> 6bdf7c9c487192089e80293da029e2345f543a90
 
 .DS_Store
 Thumbs.db
